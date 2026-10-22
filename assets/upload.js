@@ -1,9 +1,10 @@
 /* Private upload page: no telemetry, persistence, or third-party dependencies. */
 (function (global) {
   'use strict';
-  const MAX_BYTES = 200_000_000;
+  const MAX_BYTES = 209_715_200;
   const TEXT = {
     es: {
+      loading: "Comprobando tu enlace…", unavailable: "Este enlace venció o ya no tiene subidas disponibles. Pedí un enlace nuevo respondiendo el mensaje.",
       language: 'Idioma', eyebrow: 'La muestra gratis de tu familia', title: 'Envía tu grabación',
       intro: 'Una historia, con su propia voz. Elige el audio que grabaron para la muestra de KinFM.',
       consentTitle: 'Antes de subirla', consent: 'Al inicio, el abuelo o la abuela dice su nombre y que acepta que KinFM use la grabación para su muestra.',
@@ -19,6 +20,7 @@
       error: 'No pudimos confirmar esta subida. {n} archivo(s) confirmado(s). Revisa tu conexión. Si el enlace venció o el problema continúa, escribe a soporte@kinfm.com; no vuelvas a enviar los archivos ya confirmados.'
     },
     en: {
+      loading: "Checking your link…", unavailable: "This link has expired or has no uploads left. Reply to the message to ask for a new link.",
       language: 'Language', eyebrow: "Your family's free sample", title: 'Send your recording',
       intro: 'A story, in their own voice. Choose the audio you recorded for your KinFM sample.',
       consentTitle: 'Before you upload', consent: 'At the beginning, your grandparent says their name and that they agree to KinFM using the recording for their sample.',
@@ -34,6 +36,7 @@
       error: 'We could not confirm this upload. {n} file(s) confirmed. Check your connection. If the link has expired or the problem continues, contact soporte@kinfm.com; do not resend files already confirmed.'
     },
     pt: {
+      loading: "Verificando seu link…", unavailable: "Este link expirou ou não tem mais envios disponíveis. Responda à mensagem para pedir um novo link.",
       language: 'Idioma', eyebrow: 'A amostra grátis da sua família', title: 'Envie sua gravação',
       intro: 'Uma história, com a própria voz. Escolha o áudio que vocês gravaram para a amostra da KinFM.',
       consentTitle: 'Antes de enviar', consent: 'No início, o avô ou a avó diz seu nome e que aceita que a KinFM use a gravação para a sua amostra.',
@@ -49,6 +52,7 @@
       error: 'Não conseguimos confirmar este envio. {n} arquivo(s) confirmado(s). Verifique sua conexão. Se o link venceu ou o problema continuar, escreva para soporte@kinfm.com; não reenvie os arquivos já confirmados.'
     },
     it: {
+      loading: "Verifica del link…", unavailable: "Questo link è scaduto o non ha più caricamenti disponibili. Rispondi al messaggio per chiedere un nuovo link.",
       language: 'Lingua', eyebrow: 'L’assaggio gratuito della tua famiglia', title: 'Invia la tua registrazione',
       intro: 'Una storia, con la sua voce. Scegli l’audio che avete registrato per l’assaggio di KinFM.',
       consentTitle: 'Prima di caricarla', consent: 'All’inizio, il nonno o la nonna dice il proprio nome e che acconsente all’uso della registrazione da parte di KinFM per il suo assaggio.',
@@ -64,6 +68,7 @@
       error: 'Non abbiamo potuto confermare questo caricamento. {n} file confermati. Controlla la connessione. Se il link è scaduto o il problema persiste, scrivi a soporte@kinfm.com; non inviare di nuovo i file già confermati.'
     },
     fr: {
+      loading: "Vérification de votre lien…", unavailable: "Ce lien a expiré ou ne permet plus d’envois. Répondez au message pour demander un nouveau lien.",
       language: 'Langue', eyebrow: 'L’extrait gratuit de votre famille', title: 'Envoyez votre enregistrement',
       intro: 'Une histoire, avec sa propre voix. Choisissez l’audio enregistré pour votre extrait KinFM.',
       consentTitle: 'Avant l’envoi', consent: 'Au début, le grand-père ou la grand-mère dit son nom et accepte que KinFM utilise l’enregistrement pour son extrait.',
@@ -79,6 +84,7 @@
       error: 'Nous n’avons pas pu confirmer cet envoi. {n} fichier(s) confirmé(s). Vérifiez votre connexion. Si le lien a expiré ou si le problème persiste, écrivez à soporte@kinfm.com ; ne renvoyez pas les fichiers déjà confirmés.'
     },
     de: {
+      loading: "Dein Link wird geprüft…", unavailable: "Dieser Link ist abgelaufen oder erlaubt keine weiteren Uploads. Antworte auf die Nachricht und bitte um einen neuen Link.",
       language: 'Sprache', eyebrow: 'Die kostenlose Hörprobe deiner Familie', title: 'Lade deine Aufnahme hoch',
       intro: 'Eine Geschichte, mit der eigenen Stimme. Wähle die Aufnahme für eure KinFM-Hörprobe aus.',
       consentTitle: 'Vor dem Hochladen', consent: 'Am Anfang nennt dein Großvater oder deine Großmutter den eigenen Namen und stimmt zu, dass KinFM die Aufnahme für die Hörprobe verwendet.',
@@ -104,7 +110,7 @@
     return 'en';
   }
 
-  function parseLinks(hash) {
+  function parseLinks(hash, ranged = false) {
     if (!hash || hash.length > 200000) throw new Error('invalid');
     const values = JSON.parse(decodeURIComponent(hash.slice(1)));
     if (!Array.isArray(values) || !values.length || values.length > 20) throw new Error('invalid');
@@ -127,7 +133,8 @@
           !/^\d{8}T\d{6}Z$/.test(signed.get('X-Goog-Date') || '') ||
           !/^\d+$/.test(signed.get('X-Goog-Expires') || '') ||
           Number(signed.get('X-Goog-Expires')) < 1 || Number(signed.get('X-Goog-Expires')) > 604800 ||
-          signed.get('X-Goog-SignedHeaders') !== 'host') throw new Error('invalid');
+          signed.get('X-Goog-SignedHeaders') !== (ranged ? 'host;x-goog-content-length-range' : 'host') ||
+          (ranged && signed.get('X-Goog-Expires') !== '900')) throw new Error('invalid');
       return value;
     });
   }
@@ -141,12 +148,20 @@
   }
 
   function mount(doc, win) {
+    // Opening another private link in an already-open uploader is a same-document
+    // navigation. Reload to consume its fragment with a fresh quota check.
+    if (win.addEventListener) win.addEventListener('hashchange', () => {
+      if (win.location.hash) win.location.reload();
+    });
+    const code = /^#[A-Za-z0-9]{10}$/.test(win.location.hash) ? win.location.hash.slice(1) : null;
+    const api = win.KINFM_UPLOAD_CONFIG && win.KINFM_UPLOAD_CONFIG.api;
     let urls = [];
     try { urls = parseLinks(win.location.hash); } catch (_) { /* Never echo credentials or parser errors. */ }
     // Fragments never reach the server. Remove the capability from the address bar/history too.
     try { win.history.replaceState(null, '', win.location.pathname + win.location.search); } catch (_) { /* Local previews may restrict history. */ }
     let lang = language(win.location.search, win.navigator.languages || [win.navigator.language]);
-    let cursor = 0, busy = false, status = urls.length ? 'ready' : 'invalid', statusValues = { n: urls.length };
+    let available = urls.length;
+    let cursor = 0, busy = false, status = code ? 'loading' : (urls.length ? 'ready' : 'invalid'), statusValues = { n: available };
     const el = id => doc.getElementById(id);
     function message(key, values) {
       return TEXT[lang][key].replace(/\{(\w+)\}/g, (_, name) => String(values[name]));
@@ -159,17 +174,17 @@
       el('language').setAttribute('aria-label', TEXT[lang].language);
       el('progress').setAttribute('aria-label', TEXT[lang].progress);
       el('status').textContent = message(status, statusValues);
-      el('recording').disabled = busy || cursor >= urls.length;
-      el('send').disabled = busy || cursor >= urls.length;
+      el('recording').disabled = busy || available <= 0;
+      el('send').disabled = busy || available <= 0;
     }
     function show(key, values = {}) { status = key; statusValues = values; render(); }
     el('language').addEventListener('change', event => { lang = event.target.value; render(); });
     el('upload-form').addEventListener('submit', async event => {
       event.preventDefault();
-      if (busy || !urls.length || cursor >= urls.length) return;
+      if (busy || available <= 0) return;
       const files = Array.from(el('recording').files);
-      const invalid = validateFiles(files, urls.length - cursor);
-      if (invalid) { show(invalid, { n: urls.length - cursor }); return; }
+      const invalid = validateFiles(files, available);
+      if (invalid) { show(invalid, { n: available }); return; }
       busy = true;
       const progress = el('progress');
       progress.hidden = false;
@@ -178,21 +193,38 @@
       try {
         for (let i = 0; i < files.length; i += 1) {
           show('uploading', { n: i + 1, total: files.length });
-          const response = await win.fetch(urls[cursor], {
+          let target = urls[cursor];
+          const headers = { 'Content-Type': 'application/octet-stream' };
+          if (code) {
+            const signed = await win.fetch(api + '/firmar', {
+              method: 'POST', mode: 'cors', credentials: 'omit', redirect: 'error',
+              referrerPolicy: 'no-referrer', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 'código': code })
+            });
+            if ([404, 409].includes(signed.status)) throw new Error('unavailable');
+            if (!signed.ok) throw new Error('network');
+            const data = await signed.json();
+            if (data.vence_en !== 900 || !data.headers || data.headers['x-goog-content-length-range'] !== '0,209715200') throw new Error('network');
+            target = parseLinks('#' + encodeURIComponent(JSON.stringify([data.url])), true)[0];
+            headers['x-goog-content-length-range'] = '0,209715200';
+          }
+          const response = await win.fetch(target, {
             method: 'PUT', body: files[i], mode: 'cors', credentials: 'omit',
             redirect: 'error', referrerPolicy: 'no-referrer',
-            headers: { 'Content-Type': 'application/octet-stream' }
+            headers
           });
           if (!response.ok) throw new Error('upload');
           // Consume successful slots in memory; never retry or overwrite them automatically.
-          urls[cursor] = null;
+          if (!code) urls[cursor] = null;
           cursor += 1;
+          available -= 1;
         }
         progress.value = 100;
         show('done', { n: cursor });
-      } catch (_) {
+      } catch (error) {
         progress.hidden = true;
-        show('error', { n: cursor });
+        if (error.message === 'unavailable') { available = 0; show('unavailable'); }
+        else show('error', { n: cursor });
       } finally {
         busy = false;
         el('recording').value = '';
@@ -200,6 +232,24 @@
       }
     });
     render();
+    if (code) {
+      // Capability lives in memory only. No filename or media content is sent to this API.
+      return (async () => {
+        try {
+          if (!/^https:\/\/[a-z0-9.-]+\.run\.app$/.test(api || '')) throw new Error('network');
+          const response = await win.fetch(api + '/c/' + code, {
+            mode: 'cors', credentials: 'omit', redirect: 'error', referrerPolicy: 'no-referrer'
+          });
+          if (response.status === 404) { show('unavailable'); return; }
+          if (!response.ok) throw new Error('network');
+          const data = await response.json();
+          if (!Object.hasOwn(TEXT, data.lang) || !Number.isInteger(data.restantes) || data.restantes < 0 || data.restantes > 20) throw new Error('network');
+          lang = language(win.location.search, [data.lang]);
+          available = data.restantes;
+          show(available ? 'ready' : 'unavailable', { n: available });
+        } catch (_) { show('error', { n: cursor }); }
+      })();
+    }
   }
 
   if (typeof module !== 'undefined' && module.exports) module.exports = { MAX_BYTES, TEXT, language, parseLinks, validateFiles, mount };
