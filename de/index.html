@@ -75,7 +75,8 @@
       const subject = url.searchParams.get('subject');
       if (subjects.includes(subject)) {
         url.searchParams.set('subject', subject + ' · navidad-' + channel);
-        link.href = url.href;
+        // mailto (RFC 6068): '+' is not a space. URLSearchParams writes spaces as '+' and a literal '+' as %2B.
+        link.href = url.href.replace(/\+/g, '%20');
       }
     }
   }
