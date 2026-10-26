@@ -3,8 +3,9 @@
 const languages = {es:'Español',en:'English',pt:'Português',it:'Italiano',fr:'Français',de:'Deutsch'};
 const lang = document.documentElement.lang;
 const parts = location.pathname.split('/').filter(Boolean);
+const campaign = ['navidad', 'christmas'].includes(parts[1]);
 const page = ['terms','privacy','refunds','shipping'].includes(parts[1]) ? parts[1] + '/' : '';
-const preferred = (navigator.languages || [navigator.language]).map(value => value.toLowerCase().split('-')[0]).find(value => languages[value]);
+const preferred = (navigator.languages || [navigator.language]).map(value => value.toLowerCase().split('-')[0]).find(value => languages[value] && (!campaign || ['es','en'].includes(value)));
 const suggestion = document.querySelector('[data-suggest]');
 if (suggestion && preferred && preferred !== lang) {
   let dismissed = false;
@@ -13,7 +14,9 @@ if (suggestion && preferred && preferred !== lang) {
     const text = document.createElement('div');
     text.append(document.createTextNode(suggestion.dataset.prefix + ' ' + languages[preferred] + '? '));
     const link = document.createElement('a');
-    link.href = '/' + preferred + '/' + page;
+    const campaignLang = preferred === 'es' ? 'es' : 'en';
+    const campaignPath = campaignLang === 'es' ? 'navidad/' : 'christmas/';
+    link.href = campaign ? '/' + campaignLang + '/' + campaignPath + (parts.length > 2 ? (campaignLang === 'es' ? 'tarjeta/' : 'card/') : '') : '/' + preferred + '/' + page;
     link.lang = preferred;
     link.hreflang = preferred;
     link.textContent = suggestion.dataset.action;

@@ -51,5 +51,35 @@
 <section class="start-section" id="start"><div class="wrap start-inner"><span class="star" aria-hidden="true">✳</span><h2>Comincia con il tuo assaggio gratuito.</h2><p>Ascolta circa 1 minuto con la voce autentica di tuo nonno o tua nonna, tratto dalla prima registrazione e verificato dai controlli automatici di KinFM. Se ti piace, continua con Fondatori: Biografia audio a US$49, con la stessa garanzia. Altrimenti non paghi nulla.</p><a class="button" href="mailto:soporte@kinfm.com?subject=Assaggio%20gratuito%20KinFM">Richiedi il tuo assaggio gratuito</a><p><a class="text-link" href="#pricing">Scopri Fondatori</a></p><p class="fine">Se non prosegui, cancelliamo la registrazione e l’assaggio entro 30 giorni, o prima se lo chiedi a privacidad@kinfm.com.</p></div></section>
 </main>
 <footer class="footer"><div class="wrap"><div class="footer-grid"><div><a class="brand" href="/it/"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><span>Kin<span class="brand-fm">FM</span></span></a><p class="footer-tagline">La radio della tua famiglia</p><p>Creato per custodire le voci che la tua famiglia vuole continuare ad ascoltare.</p></div><nav class="footer-links" aria-label="KinFM"><a href="/it/terms/">Condizioni</a><a href="/it/privacy/">Privacy</a><a href="/it/refunds/">Rimborsi e disdette</a><a href="/it/shipping/">Spedizioni</a><a href="/it/#contact">Contatti</a></nav><section id="contact" class="contact"><h2>Parliamone</h2><p>Scrivi a soporte@kinfm.com. Rispondiamo entro un giorno lavorativo. Per privacy o cancellazione dei dati: privacidad@kinfm.com.</p><a href="mailto:soporte@kinfm.com">soporte@kinfm.com</a><a href="mailto:privacidad@kinfm.com">privacidad@kinfm.com</a></section></div><div class="footer-bottom"><p>© 2026 KinFM · SOFT DEV FZ LLC<br>SOFT DEV FZ LLC, Twin Towers, P.O. Box 4422, Fujairah Creative City, Fujairah, Emirati Arabi Uniti</p><p>Il libro stampato e Radio continua arriveranno più avanti. Oggi non sono in vendita e non spediamo nulla di fisico.</p></div><nav class="footer-languages" aria-label="Lingua"><a lang="es" hreflang="es" href="/es/" >Español</a><a lang="en" hreflang="en" href="/en/" >English</a><a lang="pt" hreflang="pt" href="/pt/" >Português</a><a lang="it" hreflang="it" href="/it/" aria-current="page">Italiano</a><a lang="fr" hreflang="fr" href="/fr/" >Français</a><a lang="de" hreflang="de" href="/de/" >Deutsch</a></nav></div></footer>
-</body>
+<script>
+(() => {
+  'use strict';
+  const allowed = ["li", "x", "wa", "fb", "rd", "pr", "g5"];
+  const checkout = "https://buy.stripe.com/bJe8wQ7sC3lLc35bGG2wU00";
+  const subjects = ["Muestra gratis KinFM", "KinFM free sample", "Amostra grátis KinFM", "Assaggio gratuito KinFM", "Extrait gratuit KinFM", "Kostenlose Hörprobe KinFM"];
+  const query = new URLSearchParams(location.search).get('c');
+  let channel = allowed.includes(query) ? query : null;
+  try {
+    if (channel) sessionStorage.setItem('kinfm_c', channel);
+    else if (query === null) channel = sessionStorage.getItem('kinfm_c');
+  } catch (_) { /* Attribution remains optional in private browsing. */ }
+  if (!allowed.includes(channel)) return;
+  for (const link of document.querySelectorAll('a[href]')) {
+    const original = link.getAttribute('href');
+    if (checkout && original.startsWith(checkout)) {
+      const url = new URL(original);
+      url.searchParams.set('client_reference_id', 'navidad-' + channel);
+      link.href = url.href;
+    } else if (original.startsWith('mailto:soporte@kinfm.com?')) {
+      const url = new URL(original);
+      const subject = url.searchParams.get('subject');
+      if (subjects.includes(subject)) {
+        url.searchParams.set('subject', subject + ' · navidad-' + channel);
+        link.href = url.href;
+      }
+    }
+  }
+})();
+
+</script><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "9747bdb24c864facb980af73383f7852"}'></script></body>
 </html>

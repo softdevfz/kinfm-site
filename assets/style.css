@@ -1559,3 +1559,36 @@ input::placeholder {
 .story-contact { align-self: center; }
 @media (max-width: 1000px) { .steps-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .steps-grid { grid-template-columns: 1fr; } }
+
+/* 2026-10-26 · plan N1 kinfm-navidad: campaign and local gift card. */
+.christmas-banner{padding-top:1.2rem;text-align:center}
+.christmas-banner a{display:block;padding:1rem;border:1px solid var(--line);border-radius:8px;background:var(--paper)}
+.christmas-intro h1{font-size:clamp(2.4rem,6vw,4.5rem);max-width:20ch;line-height:1.12}
+.christmas-intro .lead{max-width:64ch}
+.christmas-modes{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+.christmas-modes h2{font-size:1.8rem;line-height:1.2}
+.christmas-audio audio{display:block;max-width:100%;width:36rem}
+.card-page h1{font-size:clamp(2.4rem,5vw,4rem)}
+.card-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:2rem;align-items:start}
+.card-controls label{display:block;font-weight:700;margin-top:1rem}
+.card-controls input,.card-controls textarea{display:block;box-sizing:border-box;width:100%;min-width:0;border:1px solid #65675b;background:#fffdf7;padding:.8rem;border-radius:4px;font:inherit;color:#242620}
+.card-controls .actions{flex-wrap:wrap}
+.card-controls button{cursor:pointer;font:inherit;white-space:normal;text-align:left}
+.gift-card{box-sizing:border-box;width:100%;aspect-ratio:4/5;background:#f5f0e6;color:#242620;border:2px solid #b74a30;padding:clamp(1.3rem,3vw,3rem);display:flex;flex-direction:column;overflow-wrap:anywhere}
+.gift-card h2{font-family:Georgia,serif;font-size:clamp(2rem,3.5vw,3rem);line-height:1.12;margin:1rem 0}
+.gift-card p{font-size:1.1rem;line-height:1.6;margin:.7rem 0;white-space:pre-wrap}
+.gift-card .gift-brand,.gift-card .gift-domain{color:#983c27;font-weight:700}
+.gift-card .gift-domain{margin-top:auto;padding-top:1.3rem}
+#card-message{font-family:Georgia,serif;font-style:italic}
+.gift-page,.gift-page button,.gift-page input,.gift-page textarea{font-family:Arial,sans-serif}
+.gift-page h1,.gift-page h2,.gift-page .brand{font-family:Georgia,serif}
+@media(max-width:700px){.christmas-modes,.card-layout{grid-template-columns:minmax(0,1fr)}.christmas-modes .price-card{padding:1.4rem}.gift-card h2{font-size:2rem}.card-page .actions{align-items:stretch;flex-direction:column}}
+@page{size:A5 portrait;margin:10mm}
+@media print{
+ body.gift-page{background:white}
+ .gift-page .site-header,.gift-page .skip,.gift-page .language-suggestion,.gift-page .footer,.gift-page .card-page>h1,.gift-page .card-page>p,.gift-page .card-controls{display:none!important}
+ .gift-page .section,.gift-page .wrap{padding:0;margin:0;width:100%;max-width:none}
+ .gift-page .card-layout{display:block}
+ .gift-page .gift-card{width:128mm;min-height:160mm;aspect-ratio:auto;padding:10mm;border:1pt solid #b74a30;break-inside:avoid;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+ .gift-page .gift-card h2{font-size:25pt}.gift-page .gift-card p{font-size:10pt;line-height:1.4}
+}
