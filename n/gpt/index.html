@@ -1,0 +1,32 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><meta http-equiv="refresh" content="0;url=/es/"><title>KinFM</title></head><body><script>location.replace((navigator.language.toLowerCase().startsWith("es") ? "/es/navidad/?c=gpt" : "/en/christmas/?c=gpt"));</script><script>
+(() => {
+  'use strict';
+  const allowed = ["li", "x", "wa", "fb", "rd", "pr", "g5", "gpt", "poe", "gem", "cla"];
+  const checkout = "https://buy.stripe.com/bJe8wQ7sC3lLc35bGG2wU00";
+  const subjects = ["Muestra gratis KinFM", "KinFM free sample", "Amostra grátis KinFM", "Assaggio gratuito KinFM", "Extrait gratuit KinFM", "Kostenlose Hörprobe KinFM"];
+  const query = new URLSearchParams(location.search).get('c');
+  let channel = allowed.includes(query) ? query : null;
+  try {
+    if (channel) sessionStorage.setItem('kinfm_c', channel);
+    else if (query === null) channel = sessionStorage.getItem('kinfm_c');
+  } catch (_) { /* Attribution remains optional in private browsing. */ }
+  if (!allowed.includes(channel)) return;
+  for (const link of document.querySelectorAll('a[href]')) {
+    const original = link.getAttribute('href');
+    if (checkout && original.startsWith(checkout)) {
+      const url = new URL(original);
+      url.searchParams.set('client_reference_id', 'navidad-' + channel);
+      link.href = url.href;
+    } else if (original.startsWith('mailto:soporte@kinfm.com?')) {
+      const url = new URL(original);
+      const subject = url.searchParams.get('subject');
+      if (subjects.includes(subject)) {
+        url.searchParams.set('subject', subject + ' · navidad-' + channel);
+        // mailto (RFC 6068): '+' is not a space. URLSearchParams writes spaces as '+' and a literal '+' as %2B.
+        link.href = url.href.replace(/\+/g, '%20');
+      }
+    }
+  }
+})();
+
+</script><noscript><a href="/es/">KinFM</a></noscript></body></html>
