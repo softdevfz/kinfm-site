@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-ELURETzs/ClHvHb118xLJRRp1/eD5L0olpO7xVV+v7E=' 'sha256-CQ8vtruDGGQtbcdeudYw71sXTwkpohBRWdsPj501rL4='; style-src 'sha256-IEZ7eeXmr1FjAapFV0U5HyHe9dw8z9PKyzDJr8eZFLw='; img-src data:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-ELURETzs/ClHvHb118xLJRRp1/eD5L0olpO7xVV+v7E=' 'sha256-nQ19BaUm6VdUvsNyzwr6wpp3bjqm6Xcu96bUyjnQ47Q='; style-src 'sha256-IEZ7eeXmr1FjAapFV0U5HyHe9dw8z9PKyzDJr8eZFLw='; img-src data:; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="light dark">
 <title>What time should I call home on Christmas?</title>
@@ -1343,6 +1343,29 @@ fieldset.awake { border: 0; padding: 0; margin: 0; min-width: 0; }
     return th;
   }
 
+  // Share the first minute of a window (or the least-bad minute).
+  // Only native link navigation on the user's click opens WhatsApp.
+  function whatsappLink(people, localKey) {
+    var mine = people[0][localKey];
+    var lines = people.slice(1).map(function (p) {
+      var theirs = p[localKey];
+      var text = 'Christmas call? I\'ll call you on {date} at {their_time} your time ({my_time} mine).';
+      var values = {
+        date: CH.formatDayShort(theirs.date),
+        their_time: clock(theirs.time),
+        my_time: clock(mine.time)
+      };
+      text = text.replace(/\{(date|their_time|my_time)\}/g, function (_, key) { return values[key]; });
+      return (people.length > 2 ? p.label + ': ' : '') + text;
+    });
+    var message = lines.join('\n') + ' ' + 'Planned with https://kinfm.com/n/g5/';
+    var link = el('a', 'btn btn-secondary share-whatsapp', 'Send this time on WhatsApp');
+    link.setAttribute('href', 'https://wa.me/?text=' + encodeURIComponent(message));
+    link.setAttribute('target', '_blank');
+    link.setAttribute('rel', 'noopener noreferrer');
+    return link;
+  }
+
   function renderWindow(w, n) {
     var li = el('li', 'slot');
     var you = CH.formatRange(w.people[0].start, w.people[0].end, state.hour12);
@@ -1362,6 +1385,7 @@ fieldset.awake { border: 0; padding: 0; margin: 0; min-width: 0; }
       t.body.appendChild(tr);
     });
     li.appendChild(t.table);
+    li.appendChild(whatsappLink(w.people, 'start'));
     return li;
   }
 
@@ -1382,6 +1406,7 @@ fieldset.awake { border: 0; padding: 0; margin: 0; min-width: 0; }
       t.body.appendChild(tr);
     });
     box.appendChild(t.table);
+    box.appendChild(whatsappLink(lb.people, 'local'));
     if (lb.alternatives.length) {
       var shown = lb.alternatives.slice(0, 5).map(function (a) { return clock(a.caller.time); });
       var more = lb.alternatives.length - shown.length;
